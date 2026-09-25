@@ -9,53 +9,65 @@ from ..schemas import ConversationResponse, UserResponse
 
 router = APIRouter(prefix="/conversations", tags=["Conversations"])
 
+
 class CreateDirectChatRequest(BaseModel):
     user_id: int
     target_user_id: int
+
 
 class CreateGroupChatRequest(BaseModel):
     admin_id: int
     title: str
     member_ids: List[int]
 
-# GET /conversations?user_id=1  AND  GET /conversations/user/1
-@router.get("", response_model=List[ConversationResponse])
-@router.get("/", response_model=List[ConversationResponse])
-@router.get("/user/{user_id}", response_model=List[ConversationResponse])
-def get_user_conversations(
-    user_id: Optional[int] = Query(None),
-    db: Session = Depends(get_db)
-):
-    if user_id is None:
-        raise HTTPException(status_code=400, detail="user_id parameter is required")
 
-    # Fetch all conversation IDs the user belongs to
-    memberships = db.query(ConversationMember).filter(ConversationMember.user_id == user_id).all()
-    conv_ids = [m.conversation_id for m in memberships]
+def fetch_conversations_for_user(user_id: int, db: Session):
+    # 1. Query all conversation IDs the user belongs to
+    memberships = db.query(ConversationMember.conversation_id).filter(
+        ConversationMember.user_id == user_id
+    ).all()
+    conv_ids = [m[0] for m in memberships]
+
+    if not conv_ids:
+        return []
 
     conversations = db.query(Conversation).filter(Conversation.id.in_(conv_ids)).all()
-    
+
+    # 2. Fetch all members across these conversations in a single query
+    all_members = (
+        db.query(ConversationMember.conversation_id, User)
+        .join(User, ConversationMember.user_id == User.id)
+        .filter(ConversationMember.conversation_id.in_(conv_ids))
+        .all()
+    )
+
+    members_by_conv = {}
+    for c_id, user_obj in all_members:
+        if c_id not in members_by_conv:
+            members_by_conv[c_id] = []
+        members_by_conv[c_id].append(user_obj)
+
+    # 3. Fetch unread counts grouped by conversation ID in a single query
+    unread_counts_raw = (
+        db.query(Message.conversation_id, func.count(Message.id))
+        .filter(
+            Message.conversation_id.in_(conv_ids),
+            Message.sender_id != user_id,
+            Message.status != "read",
+        )
+        .group_by(Message.conversation_id)
+        .all()
+    )
+    unread_map = {c_id: count for c_id, count in unread_counts_raw}
+
     result = []
     for conv in conversations:
-        # Calculate unread message count
-        unread_count = db.query(func.count(Message.id)).filter(
-            Message.conversation_id == conv.id,
-            Message.sender_id != user_id,
-            Message.status != "read"
-        ).scalar() or 0
-
-        # Fetch other user for direct chats
-        other_user = None
-        members_list = []
+        members_list = members_by_conv.get(conv.id, [])
         
-        # Populate all members for group/direct info
-        all_memberships = db.query(ConversationMember).filter(ConversationMember.conversation_id == conv.id).all()
-        for m in all_memberships:
-            u = db.query(User).filter(User.id == m.user_id).first()
-            if u:
-                members_list.append(u)
-                if not conv.is_group and u.id != user_id:
-                    other_user = u
+        # Find partner user for direct chats
+        other_user = None
+        if not conv.is_group:
+            other_user = next((m for m in members_list if m.id != user_id), None)
 
         result.append({
             "id": conv.id,
@@ -65,10 +77,32 @@ def get_user_conversations(
             "updated_at": conv.updated_at,
             "other_user": other_user,
             "members": members_list,
-            "unread_count": unread_count
+            "unread_count": unread_map.get(conv.id, 0),
         })
 
     return result
+
+
+# Route 1: GET /conversations?user_id=1
+@router.get("", response_model=List[ConversationResponse])
+@router.get("/", response_model=List[ConversationResponse])
+def get_user_conversations_query(
+    user_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db)
+):
+    if user_id is None:
+        raise HTTPException(status_code=400, detail="user_id query parameter is required")
+    return fetch_conversations_for_user(user_id=user_id, db=db)
+
+
+# Route 2: GET /conversations/user/1
+@router.get("/user/{user_id}", response_model=List[ConversationResponse])
+def get_user_conversations_path(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    return fetch_conversations_for_user(user_id=user_id, db=db)
+
 
 # POST /conversations/direct
 @router.post("/direct", response_model=ConversationResponse)
@@ -121,6 +155,7 @@ def create_direct_conversation(payload: CreateDirectChatRequest, db: Session = D
         "unread_count": 0
     }
 
+
 # POST /conversations/group
 @router.post("/group", response_model=ConversationResponse)
 def create_group_conversation(payload: CreateGroupChatRequest, db: Session = Depends(get_db)):
@@ -152,6 +187,7 @@ def create_group_conversation(payload: CreateGroupChatRequest, db: Session = Dep
         "unread_count": 0
     }
 
+
 # GET /conversations/{conversation_id}/members
 @router.get("/{conversation_id}/members")
 def get_group_members(conversation_id: int, db: Session = Depends(get_db)):
@@ -170,6 +206,7 @@ def get_group_members(conversation_id: int, db: Session = Depends(get_db)):
                 "is_admin": m.is_admin
             })
     return result
+
 
 # POST /conversations/{conversation_id}/members (Admin only)
 @router.post("/{conversation_id}/members")
@@ -203,6 +240,7 @@ def add_group_member(
     db.add(new_member)
     db.commit()
     return {"status": "success", "message": "Member added successfully"}
+
 
 # DELETE /conversations/{conversation_id}/members/{target_user_id} (Admin only)
 @router.delete("/{conversation_id}/members/{target_user_id}")

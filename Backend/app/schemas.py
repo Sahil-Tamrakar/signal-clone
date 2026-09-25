@@ -51,7 +51,7 @@ class ConversationResponse(BaseModel):
     unread_count: int = 0
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Replaces orm_mode = True
 
 # Message Schemas
 class MessageCreate(BaseModel):
