@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { useSignal } from '@/context/SignalContext';
 import { Shield, ArrowRight, UserPlus, CheckCircle2 } from 'lucide-react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
 export default function LoginView() {
   const { setCurrentUser } = useSignal();
   const [step, setStep] = useState<'phone' | 'otp' | 'profile'>('phone');
@@ -37,7 +39,7 @@ export default function LoginView() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/auth/verify-otp', {
+      const res = await fetch(`${API_BASE}/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -80,7 +82,7 @@ export default function LoginView() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/auth/register', {
+      const res = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
