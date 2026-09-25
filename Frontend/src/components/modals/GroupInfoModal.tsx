@@ -9,6 +9,8 @@ interface GroupInfoModalProps {
   onClose: () => void;
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
 export default function GroupInfoModal({ isOpen, onClose }: GroupInfoModalProps) {
   const { activeConversation, currentUser } = useSignal();
   const [members, setMembers] = useState<any[]>([]);
@@ -19,14 +21,16 @@ export default function GroupInfoModal({ isOpen, onClose }: GroupInfoModalProps)
     if (!isOpen || !activeConversation) return;
 
     // Fetch members of current group
-    fetch(`http://127.0.0.1:8000/conversations/${activeConversation.id}/members`)
+    fetch(`${API_BASE}/conversations/${activeConversation.id}/members`)
       .then((res) => res.json())
-      .then((data) => setMembers(data));
+      .then((data) => setMembers(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Error fetching group members:", err));
 
     // Fetch all contacts to populate "Add Member" dropdown
-    fetch('http://127.0.0.1:8000/contacts/')
+    fetch(`${API_BASE}/contacts/`)
       .then((res) => res.json())
-      .then((data) => setAllContacts(data));
+      .then((data) => setAllContacts(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Error fetching contacts:", err));
   }, [isOpen, activeConversation]);
 
   if (!isOpen || !activeConversation) return null;
@@ -39,21 +43,22 @@ export default function GroupInfoModal({ isOpen, onClose }: GroupInfoModalProps)
     if (!selectedUserId) return;
 
     await fetch(
-      `http://127.0.0.1:8000/conversations/${activeConversation.id}/members?user_id=${selectedUserId}&requester_id=${currentUser?.id}`,
+      `${API_BASE}/conversations/${activeConversation.id}/members?user_id=${selectedUserId}&requester_id=${currentUser?.id}`,
       { method: 'POST' }
     );
 
     // Refresh member list
     const updated = await fetch(
-      `http://127.0.0.1:8000/conversations/${activeConversation.id}/members`
+      `${API_BASE}/conversations/${activeConversation.id}/members`
     ).then((res) => res.json());
-    setMembers(updated);
+    setMembers(Array.isArray(updated) ? updated : []);
     setSelectedUserId('');
   };
 
-  const handleRemoveMember = async (targetUserId: int) => {
+  // FIX: Changed type annotation from 'int' to 'number' and updated fetch URL
+  const handleRemoveMember = async (targetUserId: number) => {
     await fetch(
-      `http://127.0.0.1:8000/conversations/${activeConversation.id}/members/${targetUserId}?requester_id=${currentUser?.id}`,
+      `${API_BASE}/conversations/${activeConversation.id}/members/${targetUserId}?requester_id=${currentUser?.id}`,
       { method: 'DELETE' }
     );
 
@@ -112,7 +117,7 @@ export default function GroupInfoModal({ isOpen, onClose }: GroupInfoModalProps)
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-[#305EE7] text-white font-bold flex items-center justify-center text-xs">
-                  {m.display_name[0].toUpperCase()}
+                  {m.display_name ? m.display_name[0].toUpperCase() : 'U'}
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-800 flex items-center gap-1">
@@ -132,7 +137,7 @@ export default function GroupInfoModal({ isOpen, onClose }: GroupInfoModalProps)
                 <button
                   onClick={() => handleRemoveMember(m.user_id)}
                   title="Remove Member"
-                  className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg transition"
+                  className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg transition cursor-pointer"
                 >
                   <UserMinus className="w-4 h-4" />
                 </button>
