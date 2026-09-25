@@ -3,6 +3,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Conversation, Message } from '../types';
 
+// Dynamic Environment Base URLs
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || 'ws://127.0.0.1:8000';
+
 interface SignalContextType {
   currentUser: User | null;
   setCurrentUser: (user: User | null) => void;
@@ -25,7 +29,7 @@ export const SignalProvider = ({ children }: { children: React.ReactNode }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
 
-  // Restore session on initial load
+  // 1. Restore user session on initial load
   useEffect(() => {
     const saved = localStorage.getItem('signal_user');
     if (saved) {
@@ -37,12 +41,28 @@ export const SignalProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  // Fetch messages and trigger read receipts whenever active conversation changes
+  // 2. Fetch conversations when user is logged in
+  useEffect(() => {
+    if (!currentUser) return;
+
+    fetch(`${API_BASE}/conversations?user_id=${currentUser.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setConversations(data);
+        } else {
+          setConversations([]);
+        }
+      })
+      .catch((err) => console.error('Error loading conversations:', err));
+  }, [currentUser]);
+
+  // 3. Fetch messages and trigger read receipts when active conversation changes
   useEffect(() => {
     if (!activeConversation || !currentUser) return;
 
-    // 1. Fetch current chat messages safely
-    fetch(`http://127.0.0.1:8000/messages/${activeConversation.id}`)
+    // Fetch messages for active conversation
+    fetch(`${API_BASE}/messages/${activeConversation.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -57,19 +77,19 @@ export const SignalProvider = ({ children }: { children: React.ReactNode }) => {
         setMessages([]);
       });
 
-    // 2. Mark incoming messages as 'read'
-    fetch(`http://127.0.0.1:8000/messages/read/${activeConversation.id}?user_id=${currentUser.id}`, {
+    // Mark messages as read
+    fetch(`${API_BASE}/messages/read/${activeConversation.id}?user_id=${currentUser.id}`, {
       method: 'PUT',
     })
       .then((res) => res.json())
       .catch((err) => console.error('Failed to mark messages as read:', err));
   }, [activeConversation, currentUser]);
 
-  // Real-time WebSocket lifecycle
+  // 4. Real-time WebSocket lifecycle
   useEffect(() => {
     if (!currentUser) return;
 
-    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/${currentUser.id}`);
+    const socket = new WebSocket(`${WS_BASE}/ws/${currentUser.id}`);
 
     socket.onopen = () => {
       console.log('WebSocket connected for user:', currentUser.id);
@@ -82,7 +102,6 @@ export const SignalProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.type === 'new_message' || data.type === 'send_message') {
         const incomingMsg = data.message;
 
-        // Functional state update prevents missing activeConversation in closure
         setActiveConversation((currentActive) => {
           if (currentActive && incomingMsg.conversation_id === currentActive.id) {
             setMessages((prev) => {
@@ -121,13 +140,13 @@ export const SignalProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [currentUser]);
 
-  // Send message function
+  // 5. Send Message Function
   const sendMessage = async (content: string) => {
     if (!activeConversation || !currentUser || !content.trim()) return;
 
     try {
-      // 1. Persist message to backend database
-      const res = await fetch(`http://127.0.0.1:8000/messages/?sender_id=${currentUser.id}`, {
+      // Persist message to backend database
+      const res = await fetch(`${API_BASE}/messages/?sender_id=${currentUser.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -138,13 +157,13 @@ export const SignalProvider = ({ children }: { children: React.ReactNode }) => {
 
       const newMsg = await res.json();
 
-      // 2. Append to local UI state immediately
+      // Append to local UI state immediately
       setMessages((prev) => {
         if (Array.isArray(prev) && prev.some((m) => m.id === newMsg.id)) return prev;
         return Array.isArray(prev) ? [...prev, newMsg] : [newMsg];
       });
 
-      // 3. Broadcast real-time message payload via WebSockets
+      // Broadcast via WebSocket
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'send_message', message: newMsg }));
       }
