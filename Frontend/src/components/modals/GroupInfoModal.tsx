@@ -60,14 +60,6 @@ export default function GroupInfoModal({ isOpen, onClose }: GroupInfoModalProps)
       `${API_BASE}/conversations/${activeConversation.id}/members/${targetUserId}?requester_id=${currentUser?.id}`,
       { method: 'DELETE' }
     );
-# 1. Stage the file
-git add frontend/src/components/modals/GroupInfoModal.tsx
-
-# 2. Commit the fix
-git commit -m "Fix TypeScript type annotation from int to number in GroupInfoModal"
-
-# 3. Push to GitHub
-git push origin main
     // Refresh member list
     setMembers((prev) => prev.filter((m) => m.user_id !== targetUserId));
   };
