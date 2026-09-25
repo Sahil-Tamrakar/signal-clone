@@ -5,6 +5,8 @@ import { useSignal } from '@/context/SignalContext';
 import { User } from '@/types';
 import { X, Users, UserPlus } from 'lucide-react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -19,44 +21,63 @@ export default function NewChatModal({ isOpen, onClose }: Props) {
 
   useEffect(() => {
     if (!isOpen) return;
-    fetch('http://127.0.0.1:8000/contacts/')
+
+    // Fixed single quotes to template literal backticks
+    fetch(`${API_BASE}/contacts`)
       .then((res) => res.json())
-      .then((data) => setContacts(data.filter((u: User) => u.id !== currentUser?.id)));
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setContacts(data.filter((u: User) => u.id !== currentUser?.id));
+        } else {
+          setContacts([]);
+        }
+      })
+      .catch((err) => console.error('Failed to load contacts:', err));
   }, [isOpen, currentUser]);
 
   if (!isOpen) return null;
 
   const handleStartDirectChat = async (targetUserId: number) => {
     if (!currentUser) return;
-    const res = await fetch('http://127.0.0.1:8000/conversations/direct', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: currentUser.id,
-        target_user_id: targetUserId,
-      }),
-    });
-    const conv = await res.json();
-    setConversations((prev) => [conv, ...prev.filter((c) => c.id !== conv.id)]);
-    setActiveConversation(conv);
-    onClose();
+    try {
+      // Fixed single quotes to template literal backticks
+      const res = await fetch(`${API_BASE}/contacts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          target_user_id: targetUserId,
+        }),
+      });
+      const conv = await res.json();
+      setConversations((prev) => [conv, ...prev.filter((c) => c.id !== conv.id)]);
+      setActiveConversation(conv);
+      onClose();
+    } catch (err) {
+      console.error('Error starting direct chat:', err);
+    }
   };
 
   const handleCreateGroup = async () => {
     if (!currentUser || !groupTitle.trim() || selectedMemberIds.length === 0) return;
-    const res = await fetch('http://127.0.0.1:8000/conversations/group', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        admin_id: currentUser.id,
-        title: groupTitle,
-        member_ids: selectedMemberIds,
-      }),
-    });
-    const conv = await res.json();
-    setConversations((prev) => [conv, ...prev]);
-    setActiveConversation(conv);
-    onClose();
+    try {
+      // Fixed single quotes to template literal backticks
+      const res = await fetch(`${API_BASE}/contacts/conversations/group`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          admin_id: currentUser.id,
+          title: groupTitle,
+          member_ids: selectedMemberIds,
+        }),
+      });
+      const conv = await res.json();
+      setConversations((prev) => [conv, ...prev]);
+      setActiveConversation(conv);
+      onClose();
+    } catch (err) {
+      console.error('Error creating group:', err);
+    }
   };
 
   return (
@@ -107,33 +128,37 @@ export default function NewChatModal({ isOpen, onClose }: Props) {
 
           <div className="space-y-1">
             <span className="text-xs font-semibold text-gray-400 uppercase">Select Contacts</span>
-            {contacts.map((contact) => (
-              <div
-                key={contact.id}
-                onClick={() => {
-                  if (isGroupMode) {
-                    setSelectedMemberIds((prev) =>
-                      prev.includes(contact.id)
-                        ? prev.filter((id) => id !== contact.id)
-                        : [...prev, contact.id]
-                    );
-                  } else {
-                    handleStartDirectChat(contact.id);
-                  }
-                }}
-                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition ${
-                  selectedMemberIds.includes(contact.id) ? 'bg-[#305EE7]/10' : 'hover:bg-gray-100'
-                }`}
-              >
-                <div className="w-9 h-9 rounded-full bg-[#305EE7] text-white font-semibold flex items-center justify-center">
-                  {contact.display_name[0]}
+            {contacts.length === 0 ? (
+              <p className="text-xs text-gray-400 py-2">No other contacts found.</p>
+            ) : (
+              contacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  onClick={() => {
+                    if (isGroupMode) {
+                      setSelectedMemberIds((prev) =>
+                        prev.includes(contact.id)
+                          ? prev.filter((id) => id !== contact.id)
+                          : [...prev, contact.id]
+                      );
+                    } else {
+                      handleStartDirectChat(contact.id);
+                    }
+                  }}
+                  className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition ${
+                    selectedMemberIds.includes(contact.id) ? 'bg-[#305EE7]/10' : 'hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="w-9 h-9 rounded-full bg-[#305EE7] text-white font-semibold flex items-center justify-center">
+                    {contact.display_name ? contact.display_name[0] : 'U'}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-gray-800">{contact.display_name}</h4>
+                    <p className="text-xs text-gray-400">@{contact.username}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium text-gray-800">{contact.display_name}</h4>
-                  <p className="text-xs text-gray-400">@{contact.username}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
