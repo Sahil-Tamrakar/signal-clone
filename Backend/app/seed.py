@@ -8,14 +8,16 @@ def seed_database():
     db = SessionLocal()
 
     try:
-        # Check if database is already seeded
-        if db.query(User).first():
-            print("Database already contains data. Skipping seed process.")
-            return
+        print("Clearing old data and re-seeding database...")
 
-        print("Seeding database...")
+        # 1. Clear existing database records first so new messages apply
+        db.query(Message).delete()
+        db.query(ConversationMember).delete()
+        db.query(Conversation).delete()
+        db.query(User).delete()
+        db.commit()
 
-        # 1. Create Seed Users
+        # 2. Create Seed Users
         users_data = [
             {
                 "phone_number": "+1234567890",
@@ -33,15 +35,15 @@ def seed_database():
             },
             {
                 "phone_number": "+1122334455",
-                "username": "Apoorb",
+                "username": "apoorv",
                 "display_name": "Apoorv Raizada",
                 "status_text": "Available",
                 "is_online": False,
             },
             {
                 "phone_number": "+1555666777",
-                "username": "Rohan",
-                "display_name": "Rohan Negi",
+                "username": "shubh",
+                "display_name": "Shubh",
                 "status_text": "Busy",
                 "is_online": False,
             },
@@ -62,54 +64,48 @@ def seed_database():
 
         db.commit()
 
-        # Refresh instances to get auto-generated IDs
         for u in created_users:
             db.refresh(u)
 
-        sahil, harsh, alice, bob, charlie = created_users
+        sahil, harsh, apoorv, shubh, charlie = created_users
 
-        # 2. Create Conversations
-        # Conversation 1: Direct Chat between Sahil & Harsh
+        # 3. Create Conversations
         conv_sahil_harsh = Conversation(is_group=False)
-        
-        # Conversation 2: Direct Chat between Sahil & Alice
-        conv_sahil_alice = Conversation(is_group=False)
-
-        # Conversation 3: Group Chat ("Signal Engineering Team")
+        conv_sahil_apoorv = Conversation(is_group=False)
         conv_group = Conversation(
             is_group=True,
             title="Signal Engineering Team",
             avatar_url=None
         )
 
-        db.add_all([conv_sahil_harsh, conv_sahil_alice, conv_group])
+        db.add_all([conv_sahil_harsh, conv_sahil_apoorv, conv_group])
         db.commit()
 
         db.refresh(conv_sahil_harsh)
-        db.refresh(conv_sahil_alice)
+        db.refresh(conv_sahil_apoorv)
         db.refresh(conv_group)
 
-        # 3. Create Conversation Memberships
+        # 4. Create Conversation Memberships
         memberships = [
             # Direct Chat: Sahil & Harsh
             ConversationMember(conversation_id=conv_sahil_harsh.id, user_id=sahil.id, is_admin=False),
             ConversationMember(conversation_id=conv_sahil_harsh.id, user_id=harsh.id, is_admin=False),
             
-            # Direct Chat: Sahil & Alice
-            ConversationMember(conversation_id=conv_sahil_alice.id, user_id=sahil.id, is_admin=False),
-            ConversationMember(conversation_id=conv_sahil_alice.id, user_id=alice.id, is_admin=False),
+            # Direct Chat: Sahil & Apoorv
+            ConversationMember(conversation_id=conv_sahil_apoorv.id, user_id=sahil.id, is_admin=False),
+            ConversationMember(conversation_id=conv_sahil_apoorv.id, user_id=apoorv.id, is_admin=False),
 
-            # Group Chat: Sahil (Admin), Harsh, Bob, Charlie
+            # Group Chat: Sahil (Admin), Harsh, Shubh, Charlie
             ConversationMember(conversation_id=conv_group.id, user_id=sahil.id, is_admin=True),
             ConversationMember(conversation_id=conv_group.id, user_id=harsh.id, is_admin=False),
-            ConversationMember(conversation_id=conv_group.id, user_id=bob.id, is_admin=False),
+            ConversationMember(conversation_id=conv_group.id, user_id=shubh.id, is_admin=False),
             ConversationMember(conversation_id=conv_group.id, user_id=charlie.id, is_admin=False),
         ]
 
         db.add_all(memberships)
         db.commit()
 
-        # 4. Create Seed Messages
+        # 5. Create Seed Messages
         now = datetime.utcnow()
 
         messages = [
@@ -143,16 +139,16 @@ def seed_database():
                 created_at=now - timedelta(minutes=30)
             ),
 
-            # Chat with Alice
+            # Chat with Apoorv
             Message(
-                conversation_id=conv_sahil_alice.id,
-                sender_id=alice.id,
+                conversation_id=conv_sahil_apoorv.id,
+                sender_id=apoorv.id,
                 content="Hey Sahil, did you review the latest WebSocket changes?",
                 status="read",
                 created_at=now - timedelta(days=1)
             ),
             Message(
-                conversation_id=conv_sahil_alice.id,
+                conversation_id=conv_sahil_apoorv.id,
                 sender_id=sahil.id,
                 content="Yes! Real-time delivery receipts are fully working now.",
                 status="read",
@@ -169,7 +165,7 @@ def seed_database():
             ),
             Message(
                 conversation_id=conv_group.id,
-                sender_id=bob.id,
+                sender_id=shubh.id,
                 content="Glad to be here. UI looks super polished!",
                 status="read",
                 created_at=now - timedelta(days=1, hours=12)
@@ -186,7 +182,7 @@ def seed_database():
         db.add_all(messages)
         db.commit()
 
-        print("Database seeded successfully with 5 users, 3 conversations, and message history!")
+        print("Database seeded successfully with updated messages!")
 
     except Exception as e:
         db.rollback()
