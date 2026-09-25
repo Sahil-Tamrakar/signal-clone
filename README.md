@@ -1,49 +1,49 @@
 # Signal Messenger Clone (Fullstack Web Application)
 
-A functional fullstack clone of the Signal messaging application designed to replicate Signal’s user experience, visual design, and core real-time messaging workflows[cite: 4]. Built with Next.js (TypeScript), FastAPI (Python), SQLite, and WebSockets[cite: 4].
+A functional fullstack clone of the Signal messaging application designed to replicate Signal’s user experience, visual design, and core real-time messaging workflows[cite: 4]. Built with Next.js (TypeScript), FastAPI (Python), SQLite, and WebSockets.
 
 ---
 
 ## 🚀 Live Demo & Deployment
 
-* **Live Web Application (Vercel):** [[https://signal-clone-4ef4mxc4j-sahil-0abf.vercel.app](https://signal-clone-4ef4mxc4j-sahil-0abf.vercel.app](https://signal-clone-sahil-0abf.vercel.app?_vercel_share=JsCZPqhoSMMX11XQeJAbE3LdHZebI8nr))[cite: 4]
-* **Backend API Documentation (Render / Swagger):** [https://signal-clone-jy4h.onrender.com/docs](https://signal-clone-jy4h.onrender.com/docs)[cite: 4]
-* **Public GitHub Repository:** [https://github.com/Sahil-Tamrakar/signal-clone](https://github.com/Sahil-Tamrakar/signal-clone)[cite: 4]
+* **Live Web Application (Vercel):** [[https://signal-clone-4ef4mxc4j-sahil-0abf.vercel.app](https://signal-clone-4ef4mxc4j-sahil-0abf.vercel.app](https://signal-clone-sahil-0abf.vercel.app?_vercel_share=JsCZPqhoSMMX11XQeJAbE3LdHZebI8nr))
+* **Backend API Documentation (Render / Swagger):** [https://signal-clone-jy4h.onrender.com/docs](https://signal-clone-jy4h.onrender.com/docs)
+* **Public GitHub Repository:** [https://github.com/Sahil-Tamrakar/signal-clone](https://github.com/Sahil-Tamrakar/signal-clone)
 
 ---
 
 ## 🛠️ Tech Stack
 
-### **Frontend**[cite: 4]
-* **Framework:** Next.js 14+ (App Router, TypeScript)[cite: 4]
+### **Frontend**
+* **Framework:** Next.js 14+ (App Router, TypeScript)
 * **Styling:** Tailwind CSS, Lucide React Icons
 * **State Management:** React Context API (`SignalContext`)
-* **Real-time Networking:** Native WebSockets API[cite: 4]
-* **Deployment:** Vercel[cite: 4]
+* **Real-time Networking:** Native WebSockets API
+* **Deployment:** Vercel
 
-### **Backend**[cite: 4]
-* **Framework:** FastAPI (Python 3.10+)[cite: 4]
-* **Database & ORM:** SQLite, SQLAlchemy[cite: 4]
-* **Real-time Engine:** WebSockets (`ConnectionManager`)[cite: 4]
+### **Backend**
+* **Framework:** FastAPI (Python 3.10+)
+* **Database & ORM:** SQLite, SQLAlchemy
+* **Real-time Engine:** WebSockets (`ConnectionManager`)
 * **Data Validation:** Pydantic v2
-* **Deployment:** Render[cite: 4]
+* **Deployment:** Render
 
 ---
 
 ## ✨ Core Features & Functionality
 
-1. **Authentication & Onboarding**[cite: 4]
-   * Phone number/username login with mocked OTP verification (`123456`)[cite: 4].
-   * Custom display name and avatar setup[cite: 4].
-   * Session persistence via `localStorage` and REST session state[cite: 4].
+1. **Authentication & Onboarding**
+   * Phone number/username login with mocked OTP verification (`123456`)
+   * Custom display name and avatar setup.
+   * Session persistence via `localStorage` and REST session state.
 
-2. **Contacts & Conversation List**[cite: 4]
-   * Sidebar displaying active 1-on-1 direct messages and group chats sorted by recent activity[cite: 4].
-   * Real-time search filter for contacts and existing conversations[cite: 4].
-   * Unread message counters and online status badges[cite: 4].
+2. **Contacts & Conversation List**
+   * Sidebar displaying active 1-on-1 direct messages and group chats sorted by recent activity.
+   * Real-time search filter for contacts and existing conversations.
+   * Unread message counters and online status badges.
 
-3. **Real-Time One-on-One Messaging**[cite: 4]
-   * Instant bidirectional text messaging via WebSockets[cite: 4].
+3. **Real-Time One-on-One Messaging**
+   * Instant bidirectional text messaging via WebSockets.
    * Delivery receipts (`✓` sent, `✓✓` delivered/read)[cite: 4].
    * Automatic message read status updates (`PUT /messages/read/...`).
    * Complete message history persistence in SQLite[cite: 4].
