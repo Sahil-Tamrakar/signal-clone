@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.seed import seed_db
 
 from app.database import engine, Base
 from app.routers import auth, contacts, conversations, messages, websocket
@@ -18,6 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+def startup_event():
+    seed_db()  # Seeds users, contacts, and initial conversations automatically
+
 # Register Routers
 app.include_router(auth.router)
 app.include_router(contacts.router)
@@ -28,3 +33,4 @@ app.include_router(websocket.router)
 @app.get("/")
 def root():
     return {"status": "ok", "message": "Signal Messenger Backend API is running"}
+
