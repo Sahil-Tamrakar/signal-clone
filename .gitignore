@@ -1,0 +1,89 @@
+# ==========================================
+# 1. Frontend Ignores (Next.js & React)
+# ==========================================
+node_modules/
+frontend/node_modules/
+Frontend/node_modules/
+
+# Next.js build output & cache
+.next/
+frontend/.next/
+Frontend/.next/
+out/
+build/
+dist/
+
+# Next.js bundle analysis & telemetry
+.next/cache/
+
+# ==========================================
+# 2. Backend Ignores (Python & FastAPI)
+# ==========================================
+# Virtual Environments
+venv/
+backend/venv/
+Backend/venv/
+.venv/
+env/
+ENV/
+
+# Python bytecode & cache
+__pycache__/
+backend/__pycache__/
+Backend/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# SQLite Database Files
+*.db
+*.sqlite
+*.sqlite3
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+Backend/*.db
+Backend/*.sqlite
+Backend/*.sqlite3
+
+# ==========================================
+# 3. Environment Variables & Secrets
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ==========================================
+# 4. OS & IDE Specific Files
+# ==========================================
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code & JetBrains
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# ==========================================
+# 5. Logs & System Files
+# ==========================================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
