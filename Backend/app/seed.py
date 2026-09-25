@@ -117,21 +117,21 @@ def seed_database():
             Message(
                 conversation_id=conv_sahil_harsh.id,
                 sender_id=harsh.id,
-                content="aur chomu",
+                content="hey how are you?",
                 status="read",
                 created_at=now - timedelta(hours=2)
             ),
             Message(
                 conversation_id=conv_sahil_harsh.id,
                 sender_id=sahil.id,
-                content="bsdk",
+                content="I'm doing great, thanks for asking! How about you?",
                 status="read",
                 created_at=now - timedelta(hours=1, minutes=50)
             ),
             Message(
                 conversation_id=conv_sahil_harsh.id,
                 sender_id=harsh.id,
-                content="tmkc",
+                content="I'm good too! Just working on some projects.",
                 status="read",
                 created_at=now - timedelta(hours=1, minutes=45)
             ),
