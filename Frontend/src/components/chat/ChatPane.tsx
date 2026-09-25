@@ -11,7 +11,7 @@ export default function ChatPane() {
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the newest message whenever message state changes
+  // Auto-scroll to the newest message whenever messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -31,15 +31,33 @@ export default function ChatPane() {
     );
   }
 
-  // Derive conversation header title
-  const chatTitle = activeConversation.is_group
-    ? activeConversation.title
-    : activeConversation.other_user?.display_name || 'Direct Chat';
+  // Safely derive display title for group or direct chat
+  const getChatTitle = () => {
+    if (activeConversation.is_group) {
+      return activeConversation.title || 'Group Chat';
+    }
+    
+    // Find the other member in a direct conversation
+    if (activeConversation.members && Array.isArray(activeConversation.members)) {
+      const otherMember = activeConversation.members.find((m) => m.id !== currentUser?.id);
+      if (otherMember) return otherMember.display_name;
+    }
+
+    // Fallbacks if members array isn't populated directly
+    if (activeConversation.other_user?.display_name) {
+      return activeConversation.other_user.display_name;
+    }
+
+    return activeConversation.title || 'Direct Chat';
+  };
+
+  const chatTitle = getChatTitle();
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
-    sendMessage(inputText);
+    
+    sendMessage(inputText.trim());
     setInputText('');
   };
 

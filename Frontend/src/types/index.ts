@@ -13,11 +13,13 @@ export interface User {
 
 export interface Conversation {
   id: number;
-  is_group: boolean;
   title?: string;
-  avatar_url?: string;
-  updated_at: string;
-  other_user?: User; // <--- Added field
+  is_group: boolean;
+  created_at?: string;
+  updated_at?: string;
+  // Add these missing optional properties:
+  members?: User[];
+  other_user?: User;
 }
 
 export interface Message {

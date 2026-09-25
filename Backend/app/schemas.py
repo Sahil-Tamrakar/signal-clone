@@ -40,13 +40,18 @@ class ConversationBase(BaseModel):
     title: Optional[str] = None
     avatar_url: Optional[str] = None
 
-class ConversationResponse(ConversationBase):
+class ConversationResponse(BaseModel):
     id: int
-    updated_at: datetime
+    is_group: bool
+    title: Optional[str] = None
+    avatar_url: Optional[str] = None
+    updated_at: Optional[datetime] = None
     other_user: Optional[UserResponse] = None
+    members: Optional[List[UserResponse]] = []
+    unread_count: int = 0
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 # Message Schemas
 class MessageCreate(BaseModel):
