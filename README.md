@@ -6,7 +6,7 @@ A functional fullstack clone of the Signal messaging application designed to rep
 
 ## 🚀 Live Demo & Deployment
 
-* **Live Web Application (Vercel):** [[https://signal-clone-4ef4mxc4j-sahil-0abf.vercel.app](https://signal-clone-4ef4mxc4j-sahil-0abf.vercel.app](https://signal-clone-sahil-0abf.vercel.app?_vercel_share=JsCZPqhoSMMX11XQeJAbE3LdHZebI8nr))
+* **Live Web Application (Vercel):** [[https://signal-clone-4ef4mxc4j-sahil-0abf.vercel.app](https://signal-clone-steel-five.vercel.app))
 * **Backend API Documentation (Render / Swagger):** [https://signal-clone-jy4h.onrender.com/docs](https://signal-clone-jy4h.onrender.com/docs)
 * **Public GitHub Repository:** [https://github.com/Sahil-Tamrakar/signal-clone](https://github.com/Sahil-Tamrakar/signal-clone)
 
