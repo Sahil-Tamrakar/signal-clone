@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.seed import seed_db
+from app.seed import seed_database as seed_db
 
 from app.database import engine, Base
 from app.routers import auth, contacts, conversations, messages, websocket
